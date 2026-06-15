@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priyanx — Find jobs that fit</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B3A5C;--blue:#185FA5;--blue-light:#E6F1FB;--blue-mid:#B5D4F4;
+  --teal:#1D9E75;--teal-light:#E1F5EE;--amber:#BA7517;--amber-light:#FAEEDA;
+  --purple:#534AB7;--purple-light:#EEEDFE;--coral:#993C1D;--coral-light:#FAECE7;
+  --text:#1a1a1a;--muted:#555;--border:#e0e0e0;--surface:#f8f8f8;--white:#fff;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);background:var(--surface);line-height:1.6}
+
+/* API SETUP BANNER */
+#setup-banner{background:#fff3cd;border-bottom:2px solid #f0ad4e;padding:14px 2rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#setup-banner.hidden{display:none}
+.setup-text{flex:1;font-size:13px;color:#856404}
+.setup-inputs{display:flex;gap:8px;flex-wrap:wrap}
+.setup-inputs input{padding:7px 12px;border:1px solid #f0ad4e;border-radius:6px;font-size:13px;width:200px;background:#fff}
+.setup-inputs button{padding:7px 16px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer}
+
+nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:999}
+.logo{font-size:22px;font-weight:700;color:var(--blue)}.logo span{color:var(--teal)}
+.nav-links{display:flex;gap:1.5rem;list-style:none}
+.nav-links a{font-size:14px;color:var(--muted);text-decoration:none}.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;gap:10px}
+.btn{padding:8px 20px;border-radius:8px;font-size:14px;cursor:pointer;border:none;transition:all .2s}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#0d4a8a}
+
+.hero{background:linear-gradient(135deg,#dceefb 0%,#d4f0e5 100%);padding:4rem 2rem 3rem}
+.hero-inner{max-width:760px;margin:0 auto;text-align:center}
+.eyebrow{display:inline-block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);background:var(--blue-light);padding:5px 14px;border-radius:20px;margin-bottom:1.25rem}
+.hero h1{font-size:38px;font-weight:700;color:var(--navy);line-height:1.2;margin-bottom:1rem}
+.hero h1 em{font-style:normal;color:var(--teal)}
+.hero p{font-size:16px;color:var(--muted);margin-bottom:2rem;max-width:500px;margin-left:auto;margin-right:auto}
+.search-box{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,0.07);max-width:620px;margin:0 auto 1.25rem;flex-wrap:wrap}
+.search-box input{flex:1;border:none;outline:none;font-size:15px;color:var(--text);background:transparent;min-width:160px}
+.search-box select{border:none;outline:none;font-size:14px;color:var(--muted);background:transparent;padding:0 8px;border-left:1px solid var(--border)}
+.quick-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.qtag{font-size:12px;padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.7);border:1px solid var(--blue-mid);color:var(--blue);cursor:pointer;transition:all .2s}.qtag:hover{background:var(--blue);color:#fff}
+
+.stats-bar{background:var(--white);border-bottom:1px solid var(--border)}
+.stats-grid{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:1.25rem 1rem;text-align:center;border-right:1px solid var(--border)}.stat:last-child{border-right:none}
+.stat-num{font-size:24px;font-weight:700;color:var(--blue)}.stat-label{font-size:12px;color:var(--muted);margin-top:3px}
+
+.section{padding:3.5rem 2rem;max-width:760px;margin:0 auto}
+.section-alt{background:var(--white)}
+.sec-eye{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:6px}
+.sec-title{font-size:24px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.sec-sub{font-size:14px;color:var(--muted);margin-bottom:1.75rem}
+
+/* JOBS SECTION */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem}
+.filter-btn{font-size:13px;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--white);color:var(--muted);cursor:pointer;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* REAL JOB CARD */
+.job-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:flex;gap:1rem;align-items:flex-start;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.job-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(24,95,165,0.1)}
+.co-logo{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;background:var(--blue-light);color:var(--blue)}
+.job-title-text{font-size:15px;font-weight:600;margin-bottom:3px;color:var(--navy)}
+.job-meta{font-size:13px;color:var(--muted);margin-bottom:6px}
+.job-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.job-tags{display:flex;gap:6px;flex-wrap:wrap}
+.jtag{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.job-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.apply-btn{font-size:12px;padding:5px 14px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;text-decoration:none}
+.job-date{font-size:11px;color:var(--muted)}
+.salary-badge{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--teal-light);color:#085041;font-weight:500}
+
+/* LOADING & EMPTY STATES */
+#loading{display:none;text-align:center;padding:3rem;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+#no-results{display:none;text-align:center;padding:3rem;color:var(--muted)}
+#results-count{font-size:13px;color:var(--muted);margin-bottom:1rem}
+#pagination{display:flex;gap:8px;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+.page-btn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--white);color:var(--muted);cursor:pointer;font-size:13px}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-btn:hover:not(.active){border-color:var(--blue);color:var(--blue)}
+
+/* HIRING TEAM */
+.company-block{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.company-header{display:flex;align-items:center;gap:12px;padding:1.25rem;border-bottom:1px solid var(--border)}
+.active-badge{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:var(--teal-light);color:#085041;font-weight:500}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:1.25rem}
+.team-card{background:var(--surface);border-radius:10px;padding:1.25rem;text-align:center}
+.avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;margin:0 auto 0.75rem}
+.team-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.team-role{font-size:12px;color:var(--muted);margin-bottom:8px}
+.team-dept{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;font-weight:500}
+.team-quote{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:12px;border-left:2px solid var(--border);padding-left:8px;text-align:left}
+.team-links{display:flex;justify-content:center;gap:8px}
+.team-links a{font-size:12px;color:var(--blue);text-decoration:none;padding:4px 10px;border:1px solid var(--blue-mid);border-radius:6px;transition:all .2s}.team-links a:hover{background:var(--blue);color:#fff}
+.process-bar{background:var(--blue-light);border-radius:0 0 12px 12px;padding:0.75rem 1.25rem;font-size:12px;color:var(--blue)}
+
+/* DASHBOARD */
+.dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:1.5rem}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
+.metric-num{font-size:26px;font-weight:700}.metric-label{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+td{padding:11px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+.sbadge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+.s-i{background:var(--teal-light);color:#085041}.s-a{background:var(--blue-light);color:var(--blue)}
+.s-t{background:var(--amber-light);color:var(--amber)}.s-d{background:#FCEBEB;color:#501313}
+.prog-row{margin-bottom:12px}
+.prog-label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px}
+.prog-bar{height:6px;background:var(--surface);border-radius:3px;border:1px solid var(--border)}
+.prog-fill{height:100%;border-radius:3px;background:var(--blue)}
+
+/* RESOURCES */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:2rem}
+.res-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:box-shadow .2s}.res-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.res-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.res-title{font-size:14px;font-weight:600;margin-bottom:6px;line-height:1.4}
+.res-meta{font-size:12px;color:var(--muted)}
+.tips-list{display:flex;flex-direction:column;gap:8px}
+.tip{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;display:flex;gap:12px;align-items:flex-start}
+.tip-num{width:24px;height:24px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:1px}
+.tip-text{font-size:13px;line-height:1.5}
+
+/* TESTIMONIALS */
+.test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.test-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.test-quote{font-size:13px;line-height:1.6;margin-bottom:1rem;font-style:italic}
+.test-person{display:flex;align-items:center;gap:10px}
+.test-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.test-name{font-size:13px;font-weight:600}.test-role{font-size:11px;color:var(--muted)}
+.stars{color:#F5A623;font-size:13px;margin-bottom:8px}
+
+/* NEWSLETTER */
+.newsletter{background:var(--navy);padding:3.5rem 2rem;text-align:center}
+.newsletter h2{color:#B5D4F4;font-size:24px;font-weight:700;margin-bottom:8px}
+.newsletter p{color:#85B7EB;font-size:14px;margin-bottom:2rem}
+.email-form{display:flex;gap:10px;max-width:420px;margin:0 auto 1rem;flex-wrap:wrap;justify-content:center}
+.email-form input{flex:1;padding:11px 16px;border-radius:8px;border:1px solid #378ADD;background:rgba(255,255,255,0.1);color:#fff;font-size:14px;outline:none;min-width:180px}
+.email-form input::placeholder{color:#85B7EB}
+.btn-teal{background:var(--teal);color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:14px;cursor:pointer}.btn-teal:hover{background:#16845f}
+.nl-note{font-size:12px;color:#378ADD}
+
+/* CONTACT */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.contact-form{display:grid;gap:12px}
+.contact-form input,.contact-form textarea,.contact-form select{padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;width:100%;font-family:inherit;outline:none;transition:border-color .2s;background:var(--white);color:var(--text)}
+.contact-form input:focus,.contact-form textarea:focus{border-color:var(--blue)}
+.contact-form textarea{resize:vertical;min-height:100px}
+
+footer{background:#0d1f30;padding:2rem;text-align:center}
+footer p{color:#485e71;font-size:13px}
+footer a{color:#378ADD;text-decoration:none}
+
+@media(max-width:600px){
+  .hero h1{font-size:26px}.nav-links{display:none}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .contact-grid{grid-template-columns:1fr}
+  .search-box{flex-direction:column;align-items:stretch}
+  .search-box select{border-left:none;border-top:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<!-- ⚠️ SETUP BANNER — enter your Adzuna keys here -->
+<div id="setup-banner">
+  <div class="setup-text">
+    ⚠️ <strong>Step 1:</strong> Get your free API keys at <a href="https://developer.adzuna.com/signup" target="_blank" style="color:#185FA5">developer.adzuna.com/signup</a> — then paste them below to activate live job search:
+  </div>
+  <div class="setup-inputs">
+    <input id="input-app-id" placeholder="Your App ID" />
+    <input id="input-app-key" placeholder="Your App Key" />
+    <button onclick="saveKeys()">Activate live jobs ✓</button>
+  </div>
+</div>
+
+<nav>
+  <div class="logo">Priya<span>nx</span></div>
+  <ul class="nav-links">
+    <li><a href="#jobs">Jobs</a></li>
+    <li><a href="#team">Hiring team</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#resources">Resources</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn btn-outline">Log in</button>
+    <button class="btn btn-primary">Sign up free</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Your career, personalised</div>
+    <h1>Find jobs that actually fit<br>your <em>skills &amp; ambitions</em></h1>
+    <p>Search real live jobs from Berlin and across Germany — matched to your skills.</p>
+    <div class="search-box">
+      <svg width="18" height="18" fill="none" stroke="#999" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="search-input" placeholder="Job title, skill, or company…" onkeydown="if(event.key==='Enter')doSearch()" />
+      <select id="location-select">
+        <option value="de">Germany (all)</option>
+        <option value="de" data-city="berlin">Berlin</option>
+        <option value="de" data-city="munich">Munich</option>
+        <option value="de" data-city="hamburg">Hamburg</option>
+        <option value="de" data-city="frankfurt">Frankfurt</option>
+        <option value="gb">United Kingdom</option>
+        <option value="us">United States</option>
+        <option value="at">Austria</option>
+        <option value="nl">Netherlands</option>
+      </select>
+      <button class="btn btn-primary" onclick="doSearch()">Search</button>
+    </div>
+    <div class="quick-tags">
+      <span class="qtag" onclick="quickSearch('Onboarding Specialist')">Onboarding Specialist</span>
+      <span class="qtag" onclick="quickSearch('Customer Success')">Customer Success</span>
+      <span class="qtag" onclick="quickSearch('SaaS Implementation')">SaaS</span>
+      <span class="qtag" onclick="quickSearch('HR Manager')">HR Manager</span>
+      <span class="qtag" onclick="quickSearch('Remote')">Remote</span>
+    </div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-num" id="total-count">—</div><div class="stat-label">Live jobs found</div></div>
+    <div class="stat"><div class="stat-num">Free</div><div class="stat-label">Always free to search</div></div>
+    <div class="stat"><div class="stat-num">DE</div><div class="stat-label">Germany-first results</div></div>
+    <div class="stat"><div class="stat-num">Live</div><div class="stat-label">Real-time listings</div></div>
+  </div>
+</div>
+
+<!-- JOBS -->
+<div class="section-alt" id="jobs">
+<div class="section">
+  <div class="sec-eye">Live job search</div>
+  <div class="sec-title">Real jobs, right now</div>
+  <div class="sec-sub" id="results-sub">Search above to find live jobs — or click a quick tag to start.</div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter(this,'')">All types</button>
+    <button class="filter-btn" onclick="setFilter(this,'full_time')">Full-time</button>
+    <button class="filter-btn" onclick="setFilter(this,'part_time')">Part-time</button>
+    <button class="filter-btn" onclick="setFilter(this,'contract')">Contract</button>
+    <button class="filter-btn" onclick="setFilter(this,'permanent')">Permanent</button>
+  </div>
+
+  <div id="results-count"></div>
+  <div id="loading"><div class="spinner"></div>Searching live jobs…</div>
+  <div id="no-results">
+    <p style="font-size:32px;margin-bottom:8px">🔍</p>
+    <p style="font-weight:600;margin-bottom:4px">No jobs found</p>
+    <p style="font-size:13px">Try a different keyword or location</p>
+  </div>
+  <div id="jobs-list"></div>
+  <div id="pagination"></div>
+</div>
+</div>
+
+<!-- HIRING TEAM -->
+<div id="team" class="section">
+  <div class="sec-eye">Hiring team</div>
+  <div class="sec-title">The people behind the roles</div>
+  <div class="sec-sub">Know who you're applying to — before you hit send.</div>
+  <div class="company-block">
+    <div class="company-header">
+      <div class="co-logo" style="width:46px;height:46px;border-radius:10px;background:var(--blue-light);color:var(--blue)">LS</div>
+      <div><div style="font-weight:600;font-size:15px">Lightspeed Commerce</div><div style="font-size:13px;color:var(--muted)">Hiring: Onboarding Consultant · Berlin</div></div>
+      <span class="active-badge">Actively hiring</span>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="avatar" style="background:var(--blue-light);color:var(--blue)">SM</div>
+        <div class="team-name">Sarah Müller</div><div class="team-role">Talent Acquisition Lead</div>
+        <span class="team-dept" style="background:var(--blue-light);color:var(--blue)">Recruiting</span>
+        <div class="team-quote">"I look for people who can simplify complexity and genuinely enjoy helping others."</div>
+        <div class="team-links"><a href="#">LinkedIn</a><a href="#">Email</a></div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background:var(--teal-light);color:#0F6E56">JK</div>
+        <div class="team-name">Jonas Klein</div><div class="team-role">Head of Implementation</div>
+        <span class="team-dept" style="background:var(--teal-light);color:#085041">Your manager</span>
+        <div class="team-quote">"Empathy and adaptability matter more than technical knowledge — we teach the rest."</div>
+        <div class="team-links"><a href="#">LinkedIn</a><a href="#">Message</a></div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background:var(--amber-light);color:var(--amber)">AL</div>
+        <div class="team-name">Anna Lorenz</div><div class="team-role">Customer Success Director</div>
+        <span class="team-dept" style="background:var(--amber-light);color:var(--amber)">CS Leadership</span>
+        <div class="team-quote">"If training and coaching excite you, you will absolutely thrive on this team."</div>
+        <div class="team-links"><a href="#">LinkedIn</a><a href="#">Book chat</a></div>
+      </div>
+    </div>
+    <div class="process-bar">📋 Interview process: CV screen → 30-min call with Sarah → take-home task → panel with Jonas &amp; Anna → offer</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="section-alt" id="dashboard">
+<div class="section">
+  <div class="sec-eye">Your dashboard</div>
+  <div class="sec-title">Application tracker</div>
+  <div class="sec-sub">All your applications, stages, and next steps in one view.</div>
+  <div class="dash-metrics">
+    <div class="metric"><div class="metric-num" style="color:var(--blue)">4</div><div class="metric-label">Applied</div></div>
+    <div class="metric"><div class="metric-num" style="color:var(--teal)">2</div><div class="metric-label">Interviews</div></div>
+    <div class="metric"><div class="metric-num" style="color:var(--amber)">1</div><div class="metric-label">Task pending</div></div>
+    <div class="metric"><div class="metric-num" style="color:#A32D2D">1</div><div class="metric-label">Declined</div></div>
+  </div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem">
+    <table>
+      <thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Next step</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600">Lightspeed</td><td style="color:var(--muted)">Onboarding Consultant</td><td><span class="sbadge s-i">Interview</span></td><td style="color:var(--muted)">Jun 18</td></tr>
+        <tr><td style="font-weight:600">Zendesk</td><td style="color:var(--muted)">Implementation Specialist</td><td><span class="sbadge s-a">Applied</span></td><td style="color:var(--muted)">Awaiting</td></tr>
+        <tr><td style="font-weight:600">Salesforce</td><td style="color:var(--muted)">Onboarding Manager</td><td><span class="sbadge s-t">Task due</span></td><td style="color:var(--muted)">Jun 17</td></tr>
+        <tr><td style="font-weight:600">Workday</td><td style="color:var(--muted)">HR Systems Specialist</td><td><span class="sbadge s-d">Declined</span></td><td style="color:var(--muted)">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem">
+    <div style="font-size:14px;font-weight:600;margin-bottom:1rem">CV strength score</div>
+    <div class="prog-row"><div class="prog-label"><span>ATS keyword coverage</span><span style="color:var(--blue);font-weight:600">87%</span></div><div class="prog-bar"><div class="prog-fill" style="width:87%"></div></div></div>
+    <div class="prog-row"><div class="prog-label"><span>Results-driven bullet points</span><span style="color:var(--blue);font-weight:600">92%</span></div><div class="prog-bar"><div class="prog-fill" style="width:92%"></div></div></div>
+    <div class="prog-row"><div class="prog-label"><span>Formatting &amp; readability</span><span style="color:var(--teal);font-weight:600">95%</span></div><div class="prog-bar"><div class="prog-fill" style="width:95%;background:var(--teal)"></div></div></div>
+  </div>
+</div>
+</div>
+
+<!-- RESOURCES -->
+<div id="resources" class="section">
+  <div class="sec-eye">Resources</div>
+  <div class="sec-title">Boost your job search</div>
+  <div class="sec-sub">Free guides, templates, and events for job seekers.</div>
+  <div class="res-grid">
+    <div class="res-card"><div class="res-tag" style="color:var(--blue)">📝 Interview prep</div><div class="res-title">How to answer "Tell me about yourself" for SaaS roles</div><div class="res-meta">5 min read · June 2026</div></div>
+    <div class="res-card"><div class="res-tag" style="color:var(--teal)">🎥 Webinar</div><div class="res-title">Landing your first customer success role in Germany</div><div class="res-meta">Thu 19 Jun · 18:00 CET · Free</div></div>
+    <div class="res-card"><div class="res-tag" style="color:var(--amber)">📄 Template</div><div class="res-title">Cover letter template for onboarding &amp; implementation roles</div><div class="res-meta">Word &amp; PDF · Free download</div></div>
+    <div class="res-card"><div class="res-tag" style="color:var(--purple)">🤝 Community</div><div class="res-title">Berlin tech job seekers — Slack community</div><div class="res-meta">2.4k members · Free to join</div></div>
+  </div>
+  <div style="font-size:15px;font-weight:600;margin-bottom:0.75rem">5 quick wins for your job search</div>
+  <div class="tips-list">
+    <div class="tip"><span class="tip-num">1</span><span class="tip-text">Tailor your CV summary to each role — paste the job description and match the keywords exactly.</span></div>
+    <div class="tip"><span class="tip-num">2</span><span class="tip-text">Connect with the hiring manager on LinkedIn before applying. A familiar name stands out in the pile.</span></div>
+    <div class="tip"><span class="tip-num">3</span><span class="tip-text">Follow up 5 business days after applying with a one-line email referencing why you're excited about the role.</span></div>
+    <div class="tip"><span class="tip-num">4</span><span class="tip-text">Prepare 3 STAR-format examples covering onboarding, training, and cross-functional work.</span></div>
+    <div class="tip"><span class="tip-num">5</span><span class="tip-text">Set job alerts for "Onboarding Specialist Berlin" and "Customer Success DE" — check them daily at 9am.</span></div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div class="section-alt">
+<div class="section">
+  <div class="sec-eye">Testimonials</div>
+  <div class="sec-title">Success stories</div>
+  <div class="sec-sub">Real people who found their next role through Priyanx.</div>
+  <div class="test-grid">
+    <div class="test-card"><div class="stars">★★★★★</div><div class="test-quote">"I had 3 interviews within 2 weeks of uploading my CV. The match scores actually meant something."</div><div class="test-person"><div class="test-av" style="background:var(--blue-light);color:var(--blue)">RK</div><div><div class="test-name">Rahul K.</div><div class="test-role">Now: Onboarding Specialist @ Personio</div></div></div></div>
+    <div class="test-card"><div class="stars">★★★★★</div><div class="test-quote">"Seeing the hiring manager's quote changed how I wrote my cover letter. Got the job on first try."</div><div class="test-person"><div class="test-av" style="background:var(--teal-light);color:#0F6E56">LP</div><div><div class="test-name">Lena P.</div><div class="test-role">Now: Customer Success @ Zendesk</div></div></div></div>
+    <div class="test-card"><div class="stars">★★★★★</div><div class="test-quote">"As an international candidate in Germany, the bilingual job filter saved me weeks of searching."</div><div class="test-person"><div class="test-av" style="background:var(--amber-light);color:var(--amber)">AS</div><div><div class="test-name">Anya S.</div><div class="test-role">Now: Implementation Lead @ SAP</div></div></div></div>
+  </div>
+</div>
+</div>
+
+<!-- CONTACT -->
+<div id="contact" class="section">
+  <div class="sec-eye">Contact us</div>
+  <div class="sec-title">Get in touch</div>
+  <div class="sec-sub">Questions, feedback, or partnership enquiries — we read every message.</div>
+  <div class="contact-grid">
+    <form class="contact-form" onsubmit="handleContact(event)">
+      <input type="text" placeholder="Your name" required />
+      <input type="email" placeholder="Email address" required />
+      <select><option value="">What's this about?</option><option>Job seeker support</option><option>Employer / hiring team</option><option>Partnership</option><option>Bug report</option><option>Other</option></select>
+      <textarea placeholder="Your message…" required></textarea>
+      <button type="submit" class="btn btn-primary" style="padding:10px">Send message</button>
+    </form>
+    <div>
+      <div style="margin-bottom:1rem"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Email</div><div style="font-size:13px;color:var(--muted)">hello@priyanx.com</div></div>
+      <div style="margin-bottom:1rem"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Based in</div><div style="font-size:13px;color:var(--muted)">Berlin, Germany 🇩🇪</div></div>
+      <div style="margin-bottom:1rem"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Response time</div><div style="font-size:13px;color:var(--muted)">Within 24 hours on business days</div></div>
+      <div style="padding:1rem;background:var(--blue-light);border-radius:10px;font-size:13px;color:var(--blue)">💡 For urgent help, check our FAQ section first — most answers are there in under 2 minutes.</div>
+    </div>
+  </div>
+</div>
+
+<div class="newsletter">
+  <h2>Stay ahead of the job market</h2>
+  <p>New matched jobs, interview tips, and hiring trends — delivered weekly. No spam, ever.</p>
+  <div class="email-form">
+    <input type="email" id="nl-email" placeholder="your@email.com" />
+    <button class="btn-teal" onclick="handleNewsletter()">Subscribe</button>
+  </div>
+  <div class="nl-note">Join 8,400+ job seekers · Unsubscribe anytime</div>
+</div>
+
+<footer>
+  <p style="margin-bottom:8px"><strong style="color:#85B7EB">Priyanx</strong> &nbsp;·&nbsp; <a href="#jobs">Jobs</a> &nbsp;·&nbsp; <a href="#team">Hiring team</a> &nbsp;·&nbsp; <a href="#resources">Resources</a> &nbsp;·&nbsp; <a href="#contact">Contact</a></p>
+  <p>© 2026 Priyanx · Built for job seekers · Berlin, Germany · Job data powered by <a href="https://www.adzuna.com" target="_blank">Adzuna</a></p>
+</footer>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────────
+let APP_ID = localStorage.getItem('adzuna_app_id') || '';
+let APP_KEY = localStorage.getItem('adzuna_app_key') || '';
+let currentPage = 1;
+let currentQuery = '';
+let currentCountry = 'de';
+let currentContractType = '';
+const RESULTS_PER_PAGE = 10;
+
+// ── ON LOAD ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (APP_ID && APP_KEY) {
+    document.getElementById('setup-banner').classList.add('hidden');
+    document.getElementById('input-app-id').value = APP_ID;
+    document.getElementById('input-app-key').value = APP_KEY;
+    quickSearch('Onboarding Consultant Berlin');
+  }
+});
+
+// ── SAVE KEYS ────────────────────────────────────────────────────────────────
+function saveKeys() {
+  const id = document.getElementById('input-app-id').value.trim();
+  const key = document.getElementById('input-app-key').value.trim();
+  if (!id || !key) { alert('Please enter both your App ID and App Key.'); return; }
+  APP_ID = id; APP_KEY = key;
+  localStorage.setItem('adzuna_app_id', id);
+  localStorage.setItem('adzuna_app_key', key);
+  document.getElementById('setup-banner').classList.add('hidden');
+  quickSearch('Onboarding Consultant Berlin');
+}
+
+// ── SEARCH ───────────────────────────────────────────────────────────────────
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  const sel = document.getElementById('location-select');
+  currentCountry = sel.value;
+  currentQuery = q || 'jobs';
+  currentPage = 1;
+  fetchJobs();
+  document.getElementById('jobs').scrollIntoView({behavior:'smooth'});
+}
+
+function quickSearch(q) {
+  document.getElementById('search-input').value = q;
+  currentQuery = q;
+  currentPage = 1;
+  currentCountry = 'de';
+  fetchJobs();
+  document.getElementById('jobs').scrollIntoView({behavior:'smooth'});
+}
+
+function setFilter(btn, type) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentContractType = type;
+  currentPage = 1;
+  if (currentQuery) fetchJobs();
+}
+
+// ── FETCH FROM ADZUNA ─────────────────────────────────────────────────────────
+async function fetchJobs() {
+  if (!APP_ID || !APP_KEY) {
+    alert('Please enter your Adzuna App ID and App Key in the yellow banner at the top first.\n\nGet free keys at: developer.adzuna.com/signup');
+    document.getElementById('setup-banner').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('jobs-list').innerHTML = '';
+  document.getElementById('no-results').style.display = 'none';
+  document.getElementById('results-count').innerHTML = '';
+  document.getElementById('pagination').innerHTML = '';
+
+  try {
+    let url = `https://api.adzuna.com/v1/api/jobs/${currentCountry}/search/${currentPage}?app_id=${APP_ID}&app_key=${APP_KEY}&results_per_page=${RESULTS_PER_PAGE}&what=${encodeURIComponent(currentQuery)}&content-type=application/json`;
+    if (currentContractType) url += `&contract_type=${currentContractType}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.exception || `API error ${res.status}`);
+    }
+    const data = await res.json();
+    document.getElementById('loading').style.display = 'none';
+    renderJobs(data);
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('jobs-list').innerHTML = `
+      <div style="background:#fff3cd;border:1px solid #f0ad4e;border-radius:10px;padding:1.25rem;font-size:13px;color:#856404">
+        <strong>Could not load jobs:</strong> ${e.message}<br><br>
+        Check that your App ID and App Key are correct at <a href="https://developer.adzuna.com" target="_blank">developer.adzuna.com</a>
+      </div>`;
+  }
+}
+
+// ── RENDER JOBS ───────────────────────────────────────────────────────────────
+function renderJobs(data) {
+  const jobs = data.results || [];
+  const total = data.count || 0;
+
+  document.getElementById('total-count').textContent = total.toLocaleString();
+  document.getElementById('results-sub').textContent = `Showing live results for "${currentQuery}"`;
+
+  if (jobs.length === 0) {
+    document.getElementById('no-results').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('results-count').innerHTML = `<span style="font-size:13px;color:var(--muted)">Found <strong>${total.toLocaleString()}</strong> jobs for "<strong>${currentQuery}</strong>" · Page ${currentPage}</span>`;
+
+  const colors = [
+    {bg:'var(--blue-light)',color:'var(--blue)'},
+    {bg:'var(--teal-light)',color:'#0F6E56'},
+    {bg:'var(--amber-light)',color:'var(--amber)'},
+    {bg:'var(--purple-light)',color:'var(--purple)'},
+    {bg:'var(--coral-light)',color:'var(--coral)'},
+  ];
+
+  const list = document.getElementById('jobs-list');
+  list.innerHTML = '';
+
+  jobs.forEach((job, i) => {
+    const c = colors[i % colors.length];
+    const initials = (job.company && job.company.display_name)
+      ? job.company.display_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
+      : '??';
+    const location = job.location && job.location.display_name ? job.location.display_name : 'Location not specified';
+    const company = job.company && job.company.display_name ? job.company.display_name : 'Company not listed';
+    const salary = job.salary_min && job.salary_max
+      ? `€${Math.round(job.salary_min/1000)}k – €${Math.round(job.salary_max/1000)}k`
+      : job.salary_min ? `From €${Math.round(job.salary_min/1000)}k` : null;
+    const created = new Date(job.created).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const desc = job.description ? job.description.replace(/<[^>]+>/g,'').slice(0,180)+'…' : '';
+    const category = job.category && job.category.label ? job.category.label : '';
+
+    const card = document.createElement('div');
+    card.className = 'job-card';
+    card.innerHTML = `
+      <div class="co-logo" style="background:${c.bg};color:${c.color}">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div class="job-title-text">${job.title}</div>
+        <div class="job-meta">${company} · ${location}${job.contract_time ? ' · ' + job.contract_time.replace(/_/g,' ') : ''}</div>
+        <div class="job-desc">${desc}</div>
+        <div class="job-tags">
+          ${category ? `<span class="jtag">${category}</span>` : ''}
+          ${job.contract_type ? `<span class="jtag">${job.contract_type.replace(/_/g,' ')}</span>` : ''}
+          ${salary ? `<span class="salary-badge">${salary}</span>` : ''}
+        </div>
+        <div class="job-footer">
+          <span class="job-date">Posted ${created}</span>
+          <a class="apply-btn" href="${job.redirect_url}" target="_blank" rel="noopener">View &amp; Apply →</a>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  // Pagination
+  const totalPages = Math.min(Math.ceil(total / RESULTS_PER_PAGE), 10);
+  if (totalPages > 1) {
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = '';
+    for (let p = 1; p <= totalPages; p++) {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = () => { currentPage = p; fetchJobs(); document.getElementById('jobs').scrollIntoView({behavior:'smooth'}); };
+      pg.appendChild(btn);
+    }
+  }
+}
+
+// ── OTHER ─────────────────────────────────────────────────────────────────────
+function handleContact(e) {
+  e.preventDefault();
+  alert('Message sent! ✅\nWe\'ll get back to you within 24 hours.');
+  e.target.reset();
+}
+function handleNewsletter() {
+  const email = document.getElementById('nl-email').value;
+  if (!email) { alert('Please enter your email address.'); return; }
+  alert('Subscribed! ✅\nWelcome to the Priyanx newsletter.');
+  document.getElementById('nl-email').value = '';
+}
+</script>
+</body>
+</html>
